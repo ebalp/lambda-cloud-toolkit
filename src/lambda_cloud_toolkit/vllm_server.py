@@ -77,18 +77,22 @@ def wait_for_vllm_ready(
     This avoids the Lambda firewall issue — we curl localhost from inside
     the instance rather than connecting from outside.
 
+    The timeout is a *soft* timeout: if the vLLM process is still alive
+    (downloading / loading the model), we keep waiting past the deadline.
+    We only give up when the process has died or is no longer found.
+
     Args:
         ssh: Active SSH connection.
         port: vLLM port on the remote instance.
-        timeout: Max seconds to wait.
+        timeout: Soft timeout — seconds before we start checking process liveness.
         interval: Seconds between health checks.
 
     Returns:
-        True if vLLM became ready, False if timed out.
+        True if vLLM became ready, False if the process died.
     """
-    logger.info("Waiting for vLLM on %s:%d (timeout=%ds)", ssh.ip, port, timeout)
+    logger.info("Waiting for vLLM on %s:%d (soft timeout=%ds)", ssh.ip, port, timeout)
     deadline = time.time() + timeout
-    while time.time() < deadline:
+    while True:
         try:
             result = ssh.run(
                 f"curl -sf http://localhost:{port}/v1/models",
@@ -99,9 +103,25 @@ def wait_for_vllm_ready(
                 return True
         except Exception as e:
             logger.debug("vLLM health check failed: %s", e)
+
+        # Past soft timeout: check if vLLM process is still alive
+        if time.time() > deadline:
+            try:
+                proc = ssh.run("pgrep -f '[v]llm serve'", timeout=10, check=False)
+                if proc.returncode != 0 or not proc.stdout.strip():
+                    logger.warning("vLLM process died on %s", ssh.ip)
+                    _dump_vllm_log(ssh)
+                    return False
+                elapsed = int(time.time() - (deadline - timeout))
+                logger.info(
+                    "vLLM still loading on %s (%dm%ds elapsed, past soft timeout)",
+                    ssh.ip, elapsed // 60, elapsed % 60,
+                )
+            except Exception:
+                logger.warning("Cannot check vLLM process on %s, giving up", ssh.ip)
+                return False
+
         time.sleep(interval)
-    logger.warning("vLLM not ready on %s:%d after %ds", ssh.ip, port, timeout)
-    return False
 
 
 def vllm_status(ssh: SSHConnection, port: int = 8000) -> dict | None:
@@ -213,9 +233,25 @@ def ensure_vllm_running(
         port=port, extra_args=extra_args, venv_path=venv_path,
     )
     if not wait_for_vllm_ready(ssh, port=port, timeout=readiness_timeout):
+        _dump_vllm_log(ssh)
         raise RuntimeError(
             f"vLLM not ready on {ssh.ip} after {readiness_timeout}s"
         )
+
+
+def _dump_vllm_log(ssh: SSHConnection, tail: int = 80) -> None:
+    """Dump the last N lines of the vLLM server log for debugging."""
+    try:
+        result = ssh.run(
+            f"tail -n {tail} /home/ubuntu/vllm-server.log 2>/dev/null || echo '[no log file]'",
+            timeout=15, check=False,
+        )
+        logger.error("=== vLLM server log (last %d lines) ===", tail)
+        for line in result.stdout.rstrip().splitlines():
+            logger.error("  %s", line)
+        logger.error("=== end vLLM server log ===")
+    except Exception as e:
+        logger.error("Could not retrieve vLLM log: %s", e)
 
 
 def stop_vllm(ssh: SSHConnection) -> None:
