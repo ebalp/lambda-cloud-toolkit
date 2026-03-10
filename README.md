@@ -306,6 +306,12 @@ repo_url: "https://github.com/your-org/your-repo.git"
 # repo_dir: "/home/ubuntu/your-repo"  # derived from repo_url if omitted
 # setup_script: "scripts/setup.sh"    # run after clone (optional)
 
+# Extra repos cloned before `uv sync` (for local path dependencies).
+# Needed when pyproject.toml has [tool.uv.sources] entries like:
+#   some-package = { path = "../some-package", editable = true }
+# dependency_repos:
+#   - "https://github.com/your-org/some-package.git"
+
 defaults:
   vllm_port: 8000
   vllm_venv_path: /home/ubuntu/vllm-venv
