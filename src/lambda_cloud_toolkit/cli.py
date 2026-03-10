@@ -148,6 +148,7 @@ def cmd_snatch(args):
             sys.exit(1)
         remote_dir = raw_config.get("repo_dir") or _remote_dir_from_url(repo_url)
         setup_script = raw_config.get("setup_script")
+        dependency_repos = raw_config.get("dependency_repos", [])
 
         ssh = SSHConnection(ip=instance.ip, key_file=ssh_key_file)
         print(f"\nWaiting for SSH on {instance.ip}...")
@@ -161,6 +162,7 @@ def cmd_snatch(args):
                 ssh, env_file_path=env_file, repo_url=repo_url,
                 branch=args.branch, remote_dir=remote_dir,
                 setup_script=setup_script,
+                dependency_repos=dependency_repos,
             )
         except Exception as e:
             print(f"\nERROR: Setup failed: {e}")
@@ -203,11 +205,13 @@ def cmd_setup(args):
         sys.exit(1)
     remote_dir = raw_config.get("repo_dir") or _remote_dir_from_url(repo_url)
     setup_script = raw_config.get("setup_script")
+    dependency_repos = raw_config.get("dependency_repos", [])
 
     bootstrap_instance(
         ssh, env_file_path=env_file, repo_url=repo_url,
         branch=args.branch, remote_dir=remote_dir,
         setup_script=setup_script,
+        dependency_repos=dependency_repos,
     )
     print(f"Instance {args.ip} bootstrapped successfully.")
 

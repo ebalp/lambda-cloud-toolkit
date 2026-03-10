@@ -63,12 +63,13 @@ def bootstrap_instance(
     remote_dir: str | None = None,
     setup_script: str | None = None,
     install_claude: bool = True,
+    dependency_repos: list[str] | None = None,
 ) -> None:
     """Bootstrap a Lambda instance: credentials, clone, env, setup.
 
     Order:
       1. Upload .sync.env and configure GITHUB_TOKEN for git
-      2. Clone the (private) repo
+      2. Clone the (private) repo and any dependency repos
       3. Move .sync.env into the repo
       4. Configure git identity from env vars (GIT_USER_NAME, GIT_USER_EMAIL)
       5. Install uv package manager (if not present)
@@ -85,6 +86,7 @@ def bootstrap_instance(
         remote_dir: Remote directory to clone into (derived from repo_url by default).
         setup_script: Script to run after cloning (relative to repo root).
         install_claude: Whether to install Claude Code on the instance.
+        dependency_repos: Extra repo URLs to clone (for local path dependencies).
     """
     if remote_dir is None:
         remote_dir = _remote_dir_from_url(repo_url)
@@ -100,6 +102,15 @@ def bootstrap_instance(
         timeout=120,
     )
     logger.info("Repo cloned on %s", ssh.ip)
+
+    # 2b. Clone dependency repos (for local path dependencies in pyproject.toml)
+    for dep_url in (dependency_repos or []):
+        dep_dir = _remote_dir_from_url(dep_url)
+        ssh.run(
+            f"test -d {dep_dir} || git clone {dep_url} {dep_dir}",
+            timeout=120,
+        )
+        logger.info("Dependency repo cloned: %s", dep_dir)
 
     # 3. Move .sync.env into the repo
     remote_env_path = f"{remote_dir}/.sync.env"
