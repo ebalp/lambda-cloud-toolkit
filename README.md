@@ -300,13 +300,11 @@ repo_url: "https://github.com/your-org/your-repo.git"
 # setup_script: "scripts/setup.sh"    # run after clone (optional)
 
 defaults:
-  region: us-east-1
   vllm_port: 8000
   vllm_venv_path: /home/ubuntu/vllm-venv
   max_launch_retries: 5
   launch_retry_delay: 60
   readiness_timeout: 900
-  concurrent_per_model: 10
 
 # GPU types to try when snatching (in priority order)
 instance_preferences:

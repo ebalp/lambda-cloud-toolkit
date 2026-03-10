@@ -13,7 +13,7 @@ class TestLambdaConfig:
     def test_defaults(self):
         config = LambdaConfig(
             api_key="k", ssh_key_name="s", model_id="m",
-            instance_type="gpu_1x_a10", region="us-east-1",
+            instance_type="gpu_1x_a10",
             hf_token="t",
         )
         assert config.vllm_port == 8000
@@ -30,7 +30,6 @@ class TestLambdaConfig:
             ssh_key_name="test-key",
             model_id="meta-llama/Llama-3.1-8B-Instruct",
             instance_type="gpu_1x_a10",
-            region="us-east-1",
             hf_token="hf-test-token",
             vllm_extra_args="--max-model-len 4096",
         )
@@ -53,7 +52,6 @@ class TestLoadLambdaConfig:
         config_yaml.write_text("""
 ssh_key_name: "test-key"
 defaults:
-  region: us-west-2
   vllm_port: 9000
   readiness_timeout: 600
 model_gpu_map:
@@ -67,7 +65,6 @@ model_gpu_map:
             config = load_lambda_config(config_yaml, "test-model")
         assert config.instance_type == "gpu_1x_a10"
         assert config.vllm_extra_args == "--max-model-len 2048"
-        assert config.region == "us-west-2"
         assert config.vllm_port == 9000
         assert config.ssh_key_name == "test-key"
 
@@ -75,8 +72,7 @@ model_gpu_map:
         config_yaml = tmp_path / "lambda.yaml"
         config_yaml.write_text("""
 ssh_key_name: "k"
-defaults:
-  region: us-east-1
+defaults: {}
 model_gpu_map:
   _default:
     instance_type: gpu_1x_a100
@@ -134,7 +130,6 @@ model_gpu_map:
 """)
         with patch.dict(os.environ, {"LAMBDA_API_KEY": "k", "HF_TOKEN": "t"}):
             config = load_lambda_config(config_yaml, "m")
-        assert config.region == "us-east-1"
         assert config.vllm_port == 8000
         assert config.max_launch_retries == 5
         assert config.launch_retry_delay == 60
@@ -205,27 +200,6 @@ model_gpu_map:
         with patch.dict(os.environ, {"LAMBDA_API_KEY": "k", "HF_TOKEN": "t"}):
             config = load_lambda_config(config_yaml, "m")
         assert config.ssh_key_file == "~/.ssh/custom-key.pem"
-
-    def test_concurrent_per_model_default(self):
-        config = LambdaConfig(
-            api_key="k", ssh_key_name="s", model_id="m",
-            instance_type="gpu_1x_a10", region="us-east-1", hf_token="t",
-        )
-        assert config.concurrent_per_model == 10
-
-    def test_concurrent_per_model_from_yaml(self, tmp_path):
-        config_yaml = tmp_path / "lambda.yaml"
-        config_yaml.write_text("""
-ssh_key_name: "k"
-defaults:
-  concurrent_per_model: 20
-model_gpu_map:
-  _default:
-    instance_type: gpu_1x_a100
-""")
-        with patch.dict(os.environ, {"LAMBDA_API_KEY": "k", "HF_TOKEN": "t"}):
-            config = load_lambda_config(config_yaml, "m")
-        assert config.concurrent_per_model == 20
 
     def test_vllm_venv_path_from_yaml(self, tmp_path):
         config_yaml = tmp_path / "lambda.yaml"

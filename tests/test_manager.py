@@ -21,7 +21,7 @@ def lambda_config():
         ssh_key_name="test-key",
         model_id="meta-llama/Llama-3.1-8B-Instruct",
         instance_type="gpu_1x_a10",
-        region="us-east-1",
+
         hf_token="hf-test-token",
         vllm_port=8000,
         vllm_extra_args="--max-model-len 4096",
@@ -367,7 +367,7 @@ class TestContextManager:
     def test_enter_calls_launch(self, mock_launch, mock_terminate):
         config = LambdaConfig(
             api_key="k", ssh_key_name="s", model_id="m",
-            instance_type="t", region="r", hf_token="t",
+            instance_type="t", hf_token="t",
         )
         mgr = LambdaCloudManager(config)
         with mgr:
@@ -379,7 +379,7 @@ class TestContextManager:
     def test_exit_terminates_on_exception(self, mock_launch, mock_terminate):
         config = LambdaConfig(
             api_key="k", ssh_key_name="s", model_id="m",
-            instance_type="t", region="r", hf_token="t",
+            instance_type="t", hf_token="t",
         )
         mgr = LambdaCloudManager(config)
         with pytest.raises(ValueError):
@@ -392,7 +392,7 @@ class TestContextManager:
     def test_exit_does_not_suppress_exceptions(self, mock_launch, mock_terminate):
         config = LambdaConfig(
             api_key="k", ssh_key_name="s", model_id="m",
-            instance_type="t", region="r", hf_token="t",
+            instance_type="t", hf_token="t",
         )
         mgr = LambdaCloudManager(config)
         with pytest.raises(RuntimeError, match="boom"):
@@ -404,7 +404,7 @@ class TestContextManager:
     def test_enter_returns_self(self, mock_launch, mock_terminate):
         config = LambdaConfig(
             api_key="k", ssh_key_name="s", model_id="m",
-            instance_type="t", region="r", hf_token="t",
+            instance_type="t", hf_token="t",
         )
         mgr = LambdaCloudManager(config)
         with mgr as ctx:

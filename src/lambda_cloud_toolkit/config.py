@@ -14,7 +14,6 @@ class LambdaConfig:
     ssh_key_name: str
     model_id: str
     instance_type: str
-    region: str
     hf_token: str
     ssh_key_file: str = "~/.ssh/id_rsa"
     vllm_venv_path: str = "/home/ubuntu/vllm-venv"
@@ -23,7 +22,6 @@ class LambdaConfig:
     max_launch_retries: int = 5
     launch_retry_delay: int = 60
     readiness_timeout: int = 900
-    concurrent_per_model: int = 10
     instance_preferences: list[str] | None = None
     poll_interval: int = 10
 
@@ -95,7 +93,6 @@ def load_lambda_config(path: str | Path, model_id: str) -> LambdaConfig:
         ssh_key_name=data.get("ssh_key_name", ""),
         model_id=model_id,
         instance_type=primary_type,
-        region=defaults.get("region", "us-east-1"),
         hf_token=hf_token,
         ssh_key_file=data.get("ssh_key_file", "~/.ssh/id_rsa"),
         vllm_venv_path=defaults.get("vllm_venv_path", "/home/ubuntu/vllm-venv"),
@@ -104,7 +101,6 @@ def load_lambda_config(path: str | Path, model_id: str) -> LambdaConfig:
         max_launch_retries=defaults.get("max_launch_retries", 5),
         launch_retry_delay=defaults.get("launch_retry_delay", 60),
         readiness_timeout=defaults.get("readiness_timeout", 900),
-        concurrent_per_model=defaults.get("concurrent_per_model", 10),
         instance_preferences=instance_prefs,
         poll_interval=defaults.get("poll_interval", 10),
     )

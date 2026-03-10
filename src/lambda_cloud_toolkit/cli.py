@@ -112,7 +112,6 @@ def cmd_snatch(args):
         ssh_key_name=ssh_key_name,
         model_id="__snatch__",
         instance_type=target_instances[0],
-        region=raw_config.get("defaults", {}).get("region", "us-east-1"),
         hf_token=os.environ.get("HF_TOKEN", ""),
         ssh_key_file=ssh_key_file,
         instance_preferences=target_instances,
