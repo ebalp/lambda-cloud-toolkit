@@ -57,12 +57,19 @@ lambda-gpu snatch --setup
 # Snatch, bootstrap, and check out a specific branch
 lambda-gpu snatch --setup --branch feature-branch
 
+# Snatch a specific GPU type (overrides config instance_preferences)
+lambda-gpu snatch --gpu gpu_1x_a10
+
+# Multiple GPU types in priority order
+lambda-gpu snatch --gpu gpu_1x_a10,gpu_1x_a100
+
 # Use a specific config and env file
 lambda-gpu snatch --config path/to/lambda-cloud.yaml --env-file my.sync.env
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `--gpu` | from config | GPU type(s) to snatch, comma-separated |
 | `--config` | auto-discover | Path to `lambda-cloud.yaml` |
 | `--env-file` | auto-discover | Path to `.sync.env` file |
 | `--setup` | off | Bootstrap the instance after launch |
