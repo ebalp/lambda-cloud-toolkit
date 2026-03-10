@@ -97,7 +97,10 @@ def cmd_snatch(args):
         print("ERROR: LAMBDA_API_KEY not set. Source your .sync.env or use --env-file")
         sys.exit(1)
 
-    target_instances = raw_config.get("instance_preferences", ["gpu_1x_a100", "gpu_1x_a100_sxm4"])
+    if args.gpu:
+        target_instances = [g.strip() for g in args.gpu.split(",")]
+    else:
+        target_instances = raw_config.get("instance_preferences", ["gpu_1x_a100", "gpu_1x_a100_sxm4"])
 
     print("Snatching Lambda instance...")
     print(f"  Targets:       {', '.join(target_instances)}")
@@ -361,6 +364,7 @@ def main():
     p_snatch = subparsers.add_parser("snatch", help="Poll for GPU availability and launch")
     p_snatch.add_argument("--config", help="Path to lambda-cloud.yaml")
     p_snatch.add_argument("--env-file", help="Path to .sync.env file")
+    p_snatch.add_argument("--gpu", help="GPU type(s) to snatch, comma-separated (overrides config instance_preferences)")
     p_snatch.add_argument("--setup", action="store_true", help="Bootstrap after launch")
     p_snatch.add_argument("--branch", default="main", help="Git branch for --setup")
     p_snatch.set_defaults(func=cmd_snatch)
