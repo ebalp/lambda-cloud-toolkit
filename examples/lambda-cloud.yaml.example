@@ -21,19 +21,32 @@ defaults:
   launch_retry_delay: 60
   readiness_timeout: 900  # 15 min for model download + load
 
-# Preferred instance types when snatching GPUs (tried in order)
+# Per-model GPU and vLLM settings
+# _default is used for any model not explicitly listed
 instance_preferences:
   - gpu_1x_a100
   - gpu_1x_a100_sxm4
 
-# Per-model GPU and vLLM settings
-# _default is used for any model not explicitly listed
 model_gpu_map:
   meta-llama/Llama-3.1-8B-Instruct:
     instance_type: gpu_1x_a10
     instance_preferences:
       - gpu_1x_a10
       - gpu_1x_a100
+      - gpu_1x_a100_sxm4
+    vllm_args: "--max-model-len 4096"
+  meta-llama/Llama-3.3-70B-Instruct:
+    instance_type: gpu_8x_a100
+    instance_preferences:
+      - gpu_8x_a100
+      - gpu_8x_a100_sxm4
+      - gpu_8x_a10
+    vllm_args: "--tensor-parallel-size 8 --max-model-len 4096"
+  Qwen/Qwen2.5-7B-Instruct:
+    instance_type: gpu_1x_a10
+    vllm_args: "--max-model-len 4096"
+  openai/gpt-oss-20b:
+    instance_type: gpu_1x_a100
     vllm_args: "--max-model-len 4096"
   _default:
     instance_type: gpu_1x_a100

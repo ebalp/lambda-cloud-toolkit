@@ -61,7 +61,7 @@ lambda-gpu snatch --setup --branch feature-branch
 lambda-gpu snatch --gpu gpu_1x_a10
 
 # Multiple GPU types in priority order
-lambda-gpu snatch --gpu gpu_1x_a10,gpu_1x_a100
+lambda-gpu snatch --gpu gpu_1x_a10,gpu_1x_a100,gpu_1x_a100_sxm4
 
 # Use a specific config and env file
 lambda-gpu snatch --config path/to/lambda-cloud.yaml --env-file my.sync.env
@@ -325,6 +325,7 @@ model_gpu_map:
     instance_preferences:
       - gpu_1x_a10
       - gpu_1x_a100
+      - gpu_1x_a100_sxm4
     vllm_args: "--max-model-len 4096"
   _default:
     instance_type: gpu_1x_a100
