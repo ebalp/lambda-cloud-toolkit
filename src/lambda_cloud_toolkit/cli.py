@@ -49,6 +49,7 @@ def _setup_logging():
         format="%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%H:%M:%S",
     )
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def _resolve_config(args) -> str:

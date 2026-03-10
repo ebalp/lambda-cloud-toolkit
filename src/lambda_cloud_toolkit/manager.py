@@ -88,8 +88,7 @@ class LambdaCloudManager:
             try:
                 result = self._find_available(preferences)
                 if result is None:
-                    if attempt % 6 == 1:  # Log every ~minute
-                        logger.info("No GPU available yet (attempt %d)...", attempt)
+                    logger.info("No GPU available yet (attempt %d)...", attempt)
                     time.sleep(poll_interval)
                     continue
 
