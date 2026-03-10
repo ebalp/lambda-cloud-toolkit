@@ -77,7 +77,16 @@ lambda-gpu snatch --config path/to/lambda-cloud.yaml --env-file my.sync.env
 
 ### `lambda-gpu setup`
 
-Bootstrap an existing instance (upload credentials, clone repo, install dependencies).
+Bootstrap an existing instance. Runs the following steps over SSH:
+
+1. Upload `.sync.env` and configure `GITHUB_TOKEN` for private repo access
+2. Clone the repo (from `repo_url` in config) and any `dependency_repos`
+3. Configure git identity from `GIT_USER_NAME`/`GIT_USER_EMAIL` env vars
+4. Install [uv](https://docs.astral.sh/uv/) (if not present)
+5. Install Python 3.12 and run `uv sync` to set up the project environment
+6. Run optional `setup_script` (for project-specific extras)
+7. Auto-source `.sync.env` on SSH login
+8. Install [Claude Code](https://claude.ai/code)
 
 ```bash
 lambda-gpu setup --ip 192.0.2.10
