@@ -22,7 +22,7 @@ Lambda provides S3-compatible object storage ("Lambda Filesystem"). Credentials 
 
 Endpoint: `https://files.{region}.lambda.ai` (e.g., `us-east-2`).
 
-Use the `lambda-gpu sync` CLI for upload/download/ls, or any S3-compatible client (boto3, aws cli with `--endpoint-url`).
+Use the `lambda-gpu sync` CLI for upload/download/ls. The storage is S3-compatible, so any S3 client (boto3, etc.) works with `--endpoint-url`.
 
 ## Common endpoints
 

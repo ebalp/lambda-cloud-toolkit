@@ -1,8 +1,8 @@
 """S3-compatible storage sync for Lambda Cloud Filesystem.
 
 Wraps the `aws` CLI via subprocess — Lambda Filesystem exposes an
-S3-compatible endpoint, so we reuse `awscli` rather than adding boto3.
-Requires `aws` to be available on PATH.
+S3-compatible endpoint. The `aws` CLI comes pre-installed on Lambda
+instances and is pointed at Lambda's endpoint (not AWS).
 """
 
 import logging

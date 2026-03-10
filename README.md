@@ -357,7 +357,7 @@ storage:
 
 ### `.syncignore`
 
-Works like `.gitignore` -- one glob pattern per line, used as `--exclude` flags for `aws s3 sync`:
+Works like `.gitignore` -- one glob pattern per line, used as `--exclude` patterns during sync:
 
 ```
 __pycache__/*
