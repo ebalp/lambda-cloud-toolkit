@@ -132,6 +132,9 @@ def cmd_snatch(args):
         print(f"\nERROR: {e}")
         sys.exit(1)
 
+    # CLI snatch: instance should survive process exit
+    manager.remove_safety_nets()
+
     print("\n=== INSTANCE LAUNCHED ===")
     print(f"  ID:     {instance.instance_id}")
     print(f"  IP:     {instance.ip}")
@@ -153,11 +156,17 @@ def cmd_snatch(args):
             sys.exit(1)
 
         print("Bootstrapping instance...")
-        bootstrap_instance(
-            ssh, env_file_path=env_file, repo_url=repo_url,
-            branch=args.branch, remote_dir=remote_dir,
-            setup_script=setup_script,
-        )
+        try:
+            bootstrap_instance(
+                ssh, env_file_path=env_file, repo_url=repo_url,
+                branch=args.branch, remote_dir=remote_dir,
+                setup_script=setup_script,
+            )
+        except Exception as e:
+            print(f"\nERROR: Setup failed: {e}")
+            print(f"Instance is still running — SSH in to debug:")
+            print(f"  ssh -i {ssh_key_file} ubuntu@{instance.ip}")
+            sys.exit(1)
         print(f"\n=== INSTANCE READY ===")
         print(f"  SSH:  ssh -i {ssh_key_file} ubuntu@{instance.ip}")
         print(f"  Repo: {remote_dir}")

@@ -296,6 +296,19 @@ class LambdaCloudManager:
         signal.signal(signal.SIGINT, _signal_handler)
         signal.signal(signal.SIGTERM, _signal_handler)
 
+    def remove_safety_nets(self) -> None:
+        """Remove atexit and signal handlers so the instance survives process exit.
+
+        Use this for CLI commands where the instance should persist after the
+        command finishes (e.g. snatch).
+        """
+        atexit.unregister(self._atexit_cleanup)
+        if self._original_sigint is not None:
+            signal.signal(signal.SIGINT, self._original_sigint)
+        if self._original_sigterm is not None:
+            signal.signal(signal.SIGTERM, self._original_sigterm)
+        self._terminated = True  # prevent any future cleanup attempts
+
     def _atexit_cleanup(self) -> None:
         """atexit handler — terminate if not already done."""
         if not self._terminated:

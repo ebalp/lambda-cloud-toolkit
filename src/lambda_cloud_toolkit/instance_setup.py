@@ -11,6 +11,7 @@ Automates:
 
 import logging
 import posixpath
+import subprocess
 
 from lambda_cloud_toolkit.ssh import SSHConnection
 
@@ -117,20 +118,26 @@ def bootstrap_instance(
 
     # 5. Install uv if not present
     ssh.run(
+        'export PATH="$HOME/.local/bin:$PATH" && '
         "command -v uv >/dev/null 2>&1 || "
-        '{ curl -LsSf https://astral.sh/uv/install.sh | sh && '
-        'echo \'export PATH="$HOME/.local/bin:$PATH"\' >> ~/.bashrc; }',
+        "{ curl -LsSf https://astral.sh/uv/install.sh | sh; }",
         timeout=120,
     )
+    logger.info("uv installed on %s", ssh.ip)
 
     # 6. Set up Python environment
-    ssh.run(
-        f'export PATH="$HOME/.local/bin:$PATH" && '
-        f"export UV_LINK_MODE=copy && "
-        f"uv python install 3.12 && "
-        f"uv sync --project {remote_dir}",
-        timeout=300,
-    )
+    try:
+        ssh.run(
+            f'export PATH="$HOME/.local/bin:$PATH" && '
+            f"export UV_LINK_MODE=copy && "
+            f"uv python install 3.12 && "
+            f"uv sync --project {remote_dir}",
+            timeout=300,
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error("Python env setup failed (exit %d):\nstdout: %s\nstderr: %s",
+                     e.returncode, e.stdout, e.stderr)
+        raise
 
     # 7. Run optional setup script (project-specific extras)
     if setup_script:
