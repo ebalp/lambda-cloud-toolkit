@@ -17,10 +17,10 @@ repo_url: "https://github.com/your-org/your-repo.git"
 # Extra repos to clone before `uv sync` (for local path dependencies).
 # If your pyproject.toml has dependencies like:
 #   [tool.uv.sources]
-#   some-package = { path = "../some-package", editable = true }
+#   lambda-cloud-toolkit = { path = "../lambda-cloud-toolkit", editable = true }
 # list the repo URLs here so they exist on the instance when uv resolves them.
-# dependency_repos:
-#   - "https://github.com/your-org/some-package.git"
+dependency_repos:
+  - "https://github.com/ebalp/lambda-cloud-toolkit.git"
 
 defaults:
   vllm_port: 8000
