@@ -386,6 +386,44 @@ The CLI auto-discovers `.sync.env` or `*.sync.env` in the current directory. Ove
 
 See `examples/env.template` for a complete template.
 
+## Instance Termination Behavior
+
+The toolkit has safety nets (atexit handlers, signal handlers) to prevent forgotten instances from running up costs. When they fire depends on how you use the toolkit:
+
+### CLI (`lambda-gpu snatch`, `lambda-gpu setup`)
+
+**Instances are never auto-terminated.** The CLI disables safety nets after launch so the instance survives even if setup fails -- you can SSH in to debug. You are responsible for terminating the instance manually (via the Lambda Cloud dashboard or API).
+
+### Python API -- context manager (auto-terminate)
+
+The instance is terminated when the `with` block exits, whether normally or via exception/crash/signal:
+
+```python
+with LambdaCloudManager(config) as manager:
+    ssh = SSHConnection(ip=manager.instance.ip)
+    ssh.run("python train.py && lambda-gpu sync upload", timeout=3600)
+# Instance terminated automatically -- even if the script crashes
+```
+
+This is the recommended pattern for unattended batch jobs. Run your script, sync results, and the instance cleans up after itself.
+
+### Python API -- manual lifecycle
+
+Safety nets (atexit + signal handlers) are installed on `launch()`, so the instance is terminated if your process exits unexpectedly. Call `remove_safety_nets()` if you want the instance to survive:
+
+```python
+manager = LambdaCloudManager(config)
+instance = manager.launch()
+
+# Instance will auto-terminate if this process crashes
+run_experiments(instance.ip)
+manager.terminate()  # clean shutdown
+
+# OR: keep the instance alive after the script exits
+manager.remove_safety_nets()
+print(f"Instance running at {instance.ip} -- remember to terminate it!")
+```
+
 ## Development
 
 ```bash
