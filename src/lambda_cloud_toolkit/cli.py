@@ -341,7 +341,8 @@ def cmd_sync(args):
                 print(f"WARNING: {path} not found, skipping")
                 continue
             print(f"Uploading {path}/...")
-            result = storage.upload(path, subpath=path)
+            result = storage.upload(path, subpath=path,
+                                    include=args.include, exclude=args.exclude)
             if result.stdout:
                 print(result.stdout)
         print("Upload complete.")
@@ -350,7 +351,8 @@ def cmd_sync(args):
         paths = args.paths or [sync_dir]
         for path in paths:
             print(f"Downloading {path}/...")
-            result = storage.download(path, subpath=path)
+            result = storage.download(path, subpath=path,
+                                      include=args.include, exclude=args.exclude)
             if result.stdout:
                 print(result.stdout)
         print("Download complete.")
@@ -419,6 +421,11 @@ def main():
         p.add_argument("paths", nargs="*", help="Paths to sync")
         p.add_argument("--config", help="Path to lambda-cloud.yaml")
         p.add_argument("--env-file", help="Path to .sync.env file")
+        if action in ("upload", "download"):
+            p.add_argument("--include", action="append", default=None,
+                           help="Glob pattern to include (repeatable, implies --exclude '*')")
+            p.add_argument("--exclude", action="append", default=None,
+                           help="Glob pattern to exclude (repeatable)")
         p.set_defaults(func=cmd_sync)
 
     args = parser.parse_args()

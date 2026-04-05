@@ -87,12 +87,41 @@ class LambdaStorage:
             return f"{base}/{subpath.strip('/')}/"
         return f"{base}/"
 
-    def upload(self, local_dir: str, subpath: str | None = None) -> subprocess.CompletedProcess:
+    def _filter_flags(
+        self,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> list[str]:
+        """Build --include/--exclude flags for aws s3 sync.
+
+        When include patterns are given, an implicit ``--exclude "*"`` is
+        prepended so that only matching files are transferred (aws s3 sync
+        evaluates filters in order).
+        """
+        flags: list[str] = []
+        if include:
+            flags.extend(["--exclude", "*"])
+            for pat in include:
+                flags.extend(["--include", pat])
+        if exclude:
+            for pat in exclude:
+                flags.extend(["--exclude", pat])
+        return flags
+
+    def upload(
+        self,
+        local_dir: str,
+        subpath: str | None = None,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> subprocess.CompletedProcess:
         """Sync local directory to S3 bucket.
 
         Args:
             local_dir: Local directory path to upload from.
             subpath: Optional subdirectory within the bucket (e.g., "phase0/data/results").
+            include: Glob patterns to include (implies --exclude "*" first).
+            exclude: Glob patterns to exclude.
 
         Returns:
             CompletedProcess from the aws s3 sync command.
@@ -112,16 +141,25 @@ class LambdaStorage:
             bucket_uri,
             "--endpoint-url", self.endpoint_url,
             *self._exclude_flags(),
+            *self._filter_flags(include, exclude),
         ]
         logger.info("Uploading %s → %s", local_dir, bucket_uri)
         return subprocess.run(cmd, env=self._env(), check=True, capture_output=True, text=True)
 
-    def download(self, local_dir: str, subpath: str | None = None) -> subprocess.CompletedProcess:
+    def download(
+        self,
+        local_dir: str,
+        subpath: str | None = None,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> subprocess.CompletedProcess:
         """Sync S3 bucket to local directory.
 
         Args:
             local_dir: Local directory path to download into.
             subpath: Optional subdirectory within the bucket.
+            include: Glob patterns to include (implies --exclude "*" first).
+            exclude: Glob patterns to exclude.
 
         Returns:
             CompletedProcess from the aws s3 sync command.
@@ -139,6 +177,7 @@ class LambdaStorage:
             str(local_path) + "/",
             "--endpoint-url", self.endpoint_url,
             *self._exclude_flags(),
+            *self._filter_flags(include, exclude),
         ]
         logger.info("Downloading %s → %s", bucket_uri, local_dir)
         return subprocess.run(cmd, env=self._env(), check=True, capture_output=True, text=True)
